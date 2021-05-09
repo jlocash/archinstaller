@@ -22,6 +22,7 @@ function install_base {
     "tlp"
     "powertop"
     "ntfs-3g"
+    "apparmor"
 
     # virtualization tools
     "libvirt"
@@ -72,9 +73,21 @@ if [[ ${proceed} =~ ^[Yy]$ ]]; then
   log_info "Generating fstab"
   genfstab -U /mnt >>/mnt/etc/fstab
 
-  # prepare chroot
   log_info "Preparing chroot"
-  cp services/powertop.service /mnt/etc/systemd/system
+
+  # install /etc/mkinitcpio.conf
+  cp conf/mkinitcpio.conf /mnt/etc/mkinitcpio.conf
+
+  # install /etc/default/grub
+  cp conf/grub /mnt/etc/default/grub
+
+  # Install /etc/hosts
+  cp conf/hosts /mnt/etc/hosts
+
+  # Install custom services  
+  cp conf/services/powertop.service /mnt/etc/systemd/system
+
+  # install chroot scripts
   cp install.conf chroot.sh utils.sh /mnt
   arch-chroot /mnt ./chroot.sh
 
