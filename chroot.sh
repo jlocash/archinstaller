@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 source utils.sh
+source diskutil.sh
 source install.conf
 
 # constants

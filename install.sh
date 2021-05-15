@@ -94,9 +94,9 @@ if [[ $proceed =~ ^[Yy]$ ]]; then
   cp conf/services/powertop.service /mnt/etc/systemd/system
 
   # Execute chroot
-  cp install.conf chroot.sh utils.sh /mnt
+  cp install.conf chroot.sh utils.sh diskutil.sh /mnt
   arch-chroot /mnt ./chroot.sh
-  rm /mnt/chroot.sh /mnt/install.conf /mnt/utils.sh
+  rm /mnt/chroot.sh /mnt/install.conf /mnt/utils.sh /mnt/diskutil.sh
   log_info "Installation complete."
 else
   log_info "disk partitioning aborted"
