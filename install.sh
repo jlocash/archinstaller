@@ -20,8 +20,6 @@ PKG_LIST=(
   "firewalld"
   "tlp"
   "powertop"
-  "ntfs-3g"
-  "apparmor"
 
   # virtualization tools
   "libvirt"
@@ -95,13 +93,13 @@ if [[ $proceed =~ ^[Yy]$ ]]; then
 
   # Apply chroot config
   cp chroot.conf /mnt/chroot.conf
-  sed -i "s|__TARGET_ROOT_PARITION__|$root_partname|" /mnt/chroot.conf
+  sed -i "s|__TARGET_ROOT_PARTITION__|$root_partname|" /mnt/chroot.conf
   sed -i "s|__TARGET_CRYPT_NAME__|$(get_crypt_name $TARGET_DISK)|" /mnt/chroot.conf
 
   # Execute chroot
-  cp install.conf chroot.sh utils.sh diskutil.sh /mnt
+  cp install.conf chroot.sh utils.sh /mnt
   arch-chroot /mnt ./chroot.sh
-  rm /mnt/chroot.sh /mnt/install.conf /mnt/utils.sh /mnt/diskutil.sh
+  rm /mnt/chroot.sh /mnt/install.conf /mnt/utils.sh
   log_info "Installation complete."
 else
   log_info "disk partitioning aborted"
