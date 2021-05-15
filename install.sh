@@ -59,7 +59,7 @@ if [[ $proceed =~ ^[Yy]$ ]]; then
   root_partname="$(get_root_partname $TARGET_DISK)"
 
   prepare_luks "$root_partname"
-  partition_root "$root_partname"
+  partition_root "/dev/mapper/$(get_crypt_name $TARGET_DISK)"
   partition_boot "$boot_partname"
   partition_efi "$efi_partname"
 
@@ -88,7 +88,7 @@ if [[ $proceed =~ ^[Yy]$ ]]; then
   cp conf/locale.conf /mnt/etc/locale.conf
 
   # Install /etc/vconsole.conf
-  cp conf/vconsole.comf /mnt/etc/vconsole.conf
+  cp conf/vconsole.conf /mnt/etc/vconsole.conf
 
   # Install custom services  
   cp conf/services/powertop.service /mnt/etc/systemd/system
