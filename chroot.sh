@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 set -e
 source utils.sh
-source diskutil.sh
 source install.conf
+source chroot.conf
 
-# constants
-ROOTPART="$(get_root_partname $TARGET_DISK)" # eg: /dev/sda3
-CRYPT_NAME="$(get_crypt_name $TARGET_DISK)"  # eg: /dev/mapper/luks-<luksUUID>
-GRUB_CRYPT_ENTRY="rd.luks.name=$(blkid -s UUID -o value $ROOTPART)=$CRYPT_NAME root=/dev/mapper$CRYPT_NAME"
+
 
 # configure timezone
 log_info "Configuring timezone, date and locale"
@@ -42,7 +39,8 @@ systemctl enable \
 # install and configure GRUB
 log_info "Installing the GRUB bootloader"
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=archlinux
-sed -i "s|__GRUB_CRYPT_ENTRY__|$grub_crypt_entry|" /etc/default/grub
+GRUB_CRYPT_ENTRY="rd.luks.name=$(blkid -s UUID -o value $TARGET_ROOT_PARTITION)=$TARGET_CRYPT_NAME root=/dev/mapper/$TARGET_CRYPT_NAME"
+sed -i "s|__GRUB_CRYPT_ENTRY__|$GRUB_CRYPT_ENTRY|" /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Regenerate initramfs

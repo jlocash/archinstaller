@@ -93,6 +93,11 @@ if [[ $proceed =~ ^[Yy]$ ]]; then
   # Install custom services  
   cp conf/services/powertop.service /mnt/etc/systemd/system
 
+  # Apply chroot config
+  cp chroot.conf /mnt/chroot.conf
+  sed -i "s|__TARGET_ROOT_PARITION__|$root_partname|" /mnt/chroot.conf
+  sed -i "s|__TARGET_CRYPT_NAME__|$(get_crypt_name $TARGET_DISK)|" /mnt/chroot.conf
+
   # Execute chroot
   cp install.conf chroot.sh utils.sh diskutil.sh /mnt
   arch-chroot /mnt ./chroot.sh
