@@ -4,94 +4,98 @@ source utils.sh
 source diskutil.sh
 source install.conf
 
-function install_base {
-  PKG_LIST=(
-    "base"
-    "base-devel"
-    "linux"
-    "linux-firmware"
-    "linux-headers"
-    "bash-completion"
-    "vim"
-    "btrfs-progs"
-    "git"
-    "networkmanager"
-    "grub"
-    "efibootmgr"
-    "firewalld"
-    "tlp"
-    "powertop"
-    "ntfs-3g"
-    "apparmor"
+PKG_LIST=(
+  "base"
+  "base-devel"
+  "linux"
+  "linux-firmware"
+  "linux-headers"
+  "bash-completion"
+  "vim"
+  "btrfs-progs"
+  "git"
+  "networkmanager"
+  "grub"
+  "efibootmgr"
+  "firewalld"
+  "tlp"
+  "powertop"
+  "ntfs-3g"
+  "apparmor"
 
-    # virtualization tools
-    "libvirt"
-    "edk2-ovmf"
-    "ebtables"
-    "dnsmasq"
-    "dmidecode"
-    "podman"
-    "vagrant"
-    "nfs-utils"
+  # virtualization tools
+  "libvirt"
+  "edk2-ovmf"
+  "ebtables"
+  "dnsmasq"
+  "dmidecode"
+  "podman"
+  "vagrant"
+  "nfs-utils"
 
-    # GNOME desktop
-    "gnome"
-    "alsa-utils"
-    "gnome-tweaks"
-    "flatpak"
-    "firefox"
+  # GNOME desktop
+  "gnome"
+  "alsa-utils"
+  "gnome-tweaks"
+  "flatpak"
+  "firefox"
 
-    # PipeWire audio
-    "pipewire"
-    "pipewire-alsa"
-    "pipewire-jack"
-    "pipewire-pulse"
-  )
-
-  pacstrap /mnt ${PKG_LIST[@]}
-}
+  # PipeWire audio
+  "pipewire"
+  "pipewire-alsa"
+  "pipewire-jack"
+  "pipewire-pulse"
+)
 
 proceed="N"
-read -p "partition disk \"${TARGET_DISK}\"? (y/N): " proceed
-if [[ ${proceed} =~ ^[Yy]$ ]]; then
+read -p "partition disk \"$TARGET_DISK\"? (y/N): " proceed
+if [[ $proceed =~ ^[Yy]$ ]]; then
   # partition disk
-  log_info "Partitioning disk \"${TARGET_DISK}\""
-  wipe_disk "${TARGET_DISK}"
+  log_info "Partitioning disk \"$TARGET_DISK\""
+  wipe_disk "$TARGET_DISK"
 
-  partlist=("$TARGET_DISK"*)
-  prepare_luks "${partlist[3]}" "${CRYPT_NAME}"
-  partition_root "/dev/mapper/${CRYPT_NAME}"
-  partition_boot "${partlist[2]}"
-  partition_efi "${partlist[1]}"
-  create_swapfile "/mnt/swap/swapfile" "${SWAP_FILE_SIZE}"
+  efi_partname="$(get_efi_partname $TARGET_DISK)"
+  boot_partname="$(get_boot_partname $TARGET_DISK)"
+  root_partname="$(get_root_partname $TARGET_DISK)"
 
-  # pacstrap
-  log_info "Installing base system"
-  install_base
+  prepare_luks "$root_partname"
+  partition_root "$root_partname"
+  partition_boot "$boot_partname"
+  partition_efi "$efi_partname"
 
-  # create fstab
+  create_swapfile "/mnt/swap/swapfile" "$SWAP_FILE_SIZE"
+
+  # Install
+  log_info "Installing system packages"
+  pacstrap /mnt ${PKG_LIST[@]}
+
+  # Create fstab
   log_info "Generating fstab"
   genfstab -U /mnt >>/mnt/etc/fstab
 
   log_info "Preparing chroot"
 
-  # install /etc/mkinitcpio.conf
+  # Install /etc/mkinitcpio.conf
   cp conf/mkinitcpio.conf /mnt/etc/mkinitcpio.conf
 
-  # install /etc/default/grub
+  # Install /etc/default/grub
   cp conf/grub /mnt/etc/default/grub
 
   # Install /etc/hosts
   cp conf/hosts /mnt/etc/hosts
 
+  # Install /etc/locale.conf
+  cp conf/locale.conf /mnt/etc/locale.conf
+
+  # Install /etc/vconsole.conf
+  cp conf/vconsole.comf /mnt/etc/vconsole.conf
+
   # Install custom services  
   cp conf/services/powertop.service /mnt/etc/systemd/system
 
-  # install chroot scripts
+  # Execute chroot
   cp install.conf chroot.sh utils.sh /mnt
   arch-chroot /mnt ./chroot.sh
-
-  # cleanup
   rm /mnt/chroot.sh /mnt/install.conf /mnt/utils.sh
   log_info "Installation complete."
 else
