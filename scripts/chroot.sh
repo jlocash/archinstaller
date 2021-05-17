@@ -4,8 +4,6 @@ source utils.sh
 source install.conf
 source chroot.conf
 
-
-
 # configure timezone
 log_info "Configuring timezone, date and locale"
 timedatectl set-ntp true
