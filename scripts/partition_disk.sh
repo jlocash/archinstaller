@@ -38,14 +38,16 @@ if [[ $disk_continue =~ ^[Yy]$ ]]; then
   log "Creating luks on $root"
   cryptsetup -y -v luksFormat "$root"
   luksUUID=$(cryptsetup luksUUID $root)
-  crypt_name="/dev/mapper/luks-$luksUUID"
+  crypt_name="luks-$luksUUID"
+  crypt_path="/dev/mapper/luks-$luksUUID"
+  log "Opening luks $root on $crypt_path"
   cryptsetup open "$root" "$crypt_name"
   
   # create btrfs root
-  log "Creating BTRFS on $crypt_name"
+  log "Creating BTRFS on $crypt_path"
 
-  mkfs.btrfs "$crypt_name"
-  mount -t btrfs "$crypt_name" /mnt
+  mkfs.btrfs "$crypt_path"
+  mount -t btrfs "$crypt_path" /mnt
   btrfs subvolume create /mnt/@
   btrfs subvolume create /mnt/@home
   btrfs subvolume create /mnt/@swap
@@ -53,10 +55,10 @@ if [[ $disk_continue =~ ^[Yy]$ ]]; then
 
   # Mount subvolumes
   log "Mounting BTRFS subvolumes"
-  mount -t btrfs -o "subvol=@,$BTRFS_MOUNT_OPTS" "$crypt_name" /mnt
+  mount -t btrfs -o "subvol=@,$BTRFS_MOUNT_OPTS" "$crypt_path" /mnt
   mkdir /mnt/{home,swap}
-  mount -t btrfs -o "subvol=@home,$BTRFS_MOUNT_OPTS" "$crypt_name" /mnt/home
-  mount -t btrfs -o "subvol=@swap,$BTRFS_MOUNT_OPTS" "$crypt_name" /mnt/swap
+  mount -t btrfs -o "subvol=@home,$BTRFS_MOUNT_OPTS" "$crypt_path" /mnt/home
+  mount -t btrfs -o "subvol=@swap,$BTRFS_MOUNT_OPTS" "$crypt_path" /mnt/swap
 
   # create /boot
   log "Creating ext4 filesystem on $boot"
