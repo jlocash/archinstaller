@@ -17,17 +17,6 @@ PKG_LIST=(
   "efibootmgr"
   "tlp"
   "powertop"
-)
-
-log "Selecting packages for system installation"
-
-FIREWALLD_ENABLE="Y"
-read -p "Add firewalld? [Y/n]: " FIREWALLD_ENABLE
-[[ $FIREWALLD_ENABLE =~ ^[Yy]$ ]] && PKG_LIST+=("firewalld")
-
-VIRTUALIZATION_ENABLE="Y"
-read -p "Add virtualization tools? [Y/n]: " VIRTUALIZATION_ENABLE
-[[ $VIRTUALIZATION_ENABLE =~ ^[Yy]$ ]] && PKG_LIST+=(
   "libvirt"
   "edk2-ovmf"
   "ebtables"
@@ -37,6 +26,12 @@ read -p "Add virtualization tools? [Y/n]: " VIRTUALIZATION_ENABLE
   "vagrant"
   "nfs-utils"
 )
+
+log "Selecting packages for system installation"
+
+FIREWALLD_ENABLE="Y"
+read -p "Add firewalld? [Y/n]: " FIREWALLD_ENABLE
+[[ $FIREWALLD_ENABLE =~ ^[Yy]$ ]] && PKG_LIST+=("firewalld")
 
 GNOME_ENABLE="Y"
 read -p "Add the GNOME desktop? [Y/n]: " GNOME_ENABLE
