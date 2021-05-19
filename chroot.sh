@@ -2,17 +2,6 @@
 set -e
 source utils.sh
 
-CRYPT_PATH="$(findmnt -n -o SOURCE --target=/ | cut -d '[' -f 1)"
-CRYPT_NAME="$(echo $CRYPT_PATH | cut -d '/' -f 4)"
-ROOT_PART="$(cryptsetup status $CRYPT_NAME | grep device: | cut -d ':' -f 2 | xargs)"
-GRUB_CRYPT_ENTRY="rd.luks.name=$(blkid -s UUID -o value $ROOT_PART)=$CRYPT_NAME root=/dev/mapper/$CRYPT_NAME"
-
-function service_exists {
-  local service_name=$1
-  systemctl list-unit-files "$service_name*"
-  [[ $? -eq 0 ]] && return true || return false
-}
-
 hwclock --systohc
 
 # locale
@@ -51,14 +40,16 @@ svc_list=(
 )
 
 for svc in ${svc_list[@]}; do
-  if [[ service_exists "$svc" ]]; then
-    systemctl enable $svc
-  fi
+  systemctl enable $svc || true
 done
 
 # install and configure GRUB
 log "Installing the GRUB bootloader"
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=archlinux
+CRYPT_PATH="$(findmnt -n -o SOURCE --target=/ | cut -d '[' -f 1)"
+CRYPT_NAME="$(echo $CRYPT_PATH | cut -d '/' -f 4)"
+ROOT_PART="$(cryptsetup status $CRYPT_NAME | grep device: | cut -d ':' -f 2 | xargs)"
+GRUB_CRYPT_ENTRY="rd.luks.name=$(blkid -s UUID -o value $ROOT_PART)=$CRYPT_NAME root=/dev/mapper/$CRYPT_NAME"
 sed -i "s|__GRUB_CRYPT_ENTRY__|$GRUB_CRYPT_ENTRY|" /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 

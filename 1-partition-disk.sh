@@ -16,7 +16,7 @@ log "disk '$SELECTED_DISK' selected for partitioning"
 read -p "continue? (y/N): " disk_continue
 
 if [[ $disk_continue =~ ^[Yy]$ ]]; then
-  log "wiping disk '$SELECTED_DISK'"
+  log "Wiping disk '$SELECTED_DISK'"
   # Format the disk as GPT with the following paritition scheme:
   # - 1 - 512M        - /boot/efi
   # - 2 - 1GB         - /boot
