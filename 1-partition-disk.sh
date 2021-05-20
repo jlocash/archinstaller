@@ -73,7 +73,7 @@ if [[ $disk_continue =~ ^[Yy]$ ]]; then
 
   # create swapfile
   swap_size=""
-  while [[ "$swap_size" == "" ]]; do
+  while [[ -z $swap_size ]]; do
     read -p "Enter swap file size (eg: 2G): " swap_size
   done
 

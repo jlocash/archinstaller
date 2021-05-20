@@ -14,14 +14,18 @@ sed -i "s/__TARGET_LOCALE__/$TARGET_LOCALE/" /etc/locale.conf
 
 # keymap
 log "Configuring system keymap"
-TARGET_KEYMAP="us"
 read -p "enter desired keymap [us]: " TARGET_KEYMAP
+if [[ -z $TARGET_KEYMAP ]]; then
+  TARGET_KEYMAP="us"
+fi
 sed -i "s/__TARGET_KEYMAP__/$TARGET_KEYMAP/" /etc/vconsole.conf
 
 # hostname
 log "Configuring system hostname"
-TARGET_HOSTNAME="archlinux"
 read -p "enter desired hostname [archlinux]: " TARGET_HOSTNAME
+if [[ -z $TARGET_HOSTNAME ]]; then
+  TARGET_HOSTNAME="archlinux"
+fi
 echo "$TARGET_HOSTNAME" >/etc/hostname
 sed -i "s/__TARGET_HOSTNAME__/$TARGET_HOSTNAME/g" /etc/hosts
 
@@ -60,7 +64,7 @@ mkinitcpio -p linux
 # create administrator user
 log "Creating local administrator account"
 username=""
-while [[ "$username" == "" ]]; do
+while [[ -z $username ]]; do
   read -p "Enter username: " username
 done
 
