@@ -5,7 +5,6 @@ source "$(dirname $0)/utils.sh"
 BTRFS_MOUNT_OPTS="ssd,noatime,space_cache,commit=120,compress=zstd"
 
 log "DISK PARTITIONING"
-
 SELECTED_DISK=""
 while [[ "$SELECTED_DISK" == "" ]]; do
   read -p "enter disk to partition (eg: /dev/sda): " SELECTED_DISK
@@ -42,7 +41,7 @@ if [[ $disk_continue =~ ^[Yy]$ ]]; then
   crypt_path="/dev/mapper/luks-$luksUUID"
   log "Opening luks $root on $crypt_path"
   cryptsetup open "$root" "$crypt_name"
-  
+
   # create btrfs root
   log "Creating BTRFS on $crypt_path"
 
@@ -87,7 +86,7 @@ if [[ $disk_continue =~ ^[Yy]$ ]]; then
   mkswap /mnt/swap/swapfile
   swapon /mnt/swap/swapfile
 
-  log "Partitioning completed on $SELECTED_DISK"  
+  log "Partitioning completed on $SELECTED_DISK"
 else
   log "partitioning aborted by user"
   exit 1

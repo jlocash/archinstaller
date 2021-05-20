@@ -2,7 +2,7 @@
 set -e
 source "$(dirname $0)/utils.sh"
 
-PKG_LIST=(
+pkglist=(
   "base"
   "base-devel"
   "linux"
@@ -17,26 +17,35 @@ PKG_LIST=(
   "efibootmgr"
   "tlp"
   "powertop"
-  "libvirt"
-  "edk2-ovmf"
-  "ebtables"
-  "dnsmasq"
-  "dmidecode"
-  "podman"
-  "vagrant"
-  "nfs-utils"
 )
 
 log "Selecting packages for system installation"
 
-FIREWALLD_ENABLE="Y"
-read -p "Add firewalld? [Y/n]: " FIREWALLD_ENABLE
-[[ $FIREWALLD_ENABLE =~ ^[Yy]$ ]] && PKG_LIST+=("firewalld")
+firewalld_enable="Y"
+read -p "Add firewalld? [Y/n]: " firewalld_enable
+if [[ $firewalld_enable =~ ^[Yy]$ ]]; then
+  pkglist+=("firewalld")
+fi
 
-GNOME_ENABLE="Y"
-read -p "Add the GNOME desktop? [Y/n]: " GNOME_ENABLE
-if [[ $GNOME_ENABLE =~ ^[Yy]$ ]]; then
-  PKG_LIST+=(
+virt_enable="Y"
+read -p "Add virtualization tools? [Y/n]: " virt_enable
+if [[ $virt_enable =~ ^[Yy]$ ]]; then
+  pkglist+=(
+    "libvirt"
+    "edk2-ovmf"
+    "ebtables"
+    "dnsmasq"
+    "dmidecode"
+    "podman"
+    "vagrant"
+    "nfs-utils"
+  )
+fi
+
+gnome_enable="Y"
+read -p "Add the GNOME desktop? [Y/n]: " gnome_enable
+if [[ $gnome_enable =~ ^[Yy]$ ]]; then
+  pkglist+=(
     "gnome"
     "alsa-utils"
     "gnome-tweaks"
@@ -44,24 +53,28 @@ if [[ $GNOME_ENABLE =~ ^[Yy]$ ]]; then
     "firefox"
   )
 
-  PIPEWIRE_ENABLE="Y"
-  read -p "Replace pulseaudio with PipeWire? [Y/n]: " PIPEWIRE_ENABLE
-  [[ $PIPEWIRE_ENABLE =~ ^[Yy]$ ]] && PKG_LIST+=(
-    "pipewire"
-    "pipewire-alsa"
-    "pipewire-jack"
-    "pipewire-pulse"
-  )
+  pipewire_enable="Y"
+  read -p "Replace pulseaudio with PipeWire? [Y/n]: " pipewire_enable
+  if [[ $pipewire_enable =~ ^[Yy]$ ]]; then
+    pkglist+=(
+      "pipewire"
+      "pipewire-alsa"
+      "pipewire-jack"
+      "pipewire-pulse"
+    )
+  fi
 
-  FLATPAK_ENABLE="Y"
-  read -p "Add Flatpak? [Y/n]: " FLATPAK_ENABLE
-  [[ $FLATPAK_ENABLE =~ ^[Yy]$ ]] && PKG_LIST+=(
-    "pipewire"
-    "pipewire-alsa"
-    "pipewire-jack"
-    "pipewire-pulse"
-  )
+  flatpak_enable="Y"
+  read -p "Add Flatpak? [Y/n]: " flatpak_enable
+  if [[ $flatpak_enable =~ ^[Yy]$ ]]; then
+    pkglist+=(
+      "pipewire"
+      "pipewire-alsa"
+      "pipewire-jack"
+      "pipewire-pulse"
+    )
+  fi
 fi
 
 log "Installing selected packages..."
-pacstrap /mnt ${PKG_LIST[@]}
+pacstrap /mnt ${pkglist[@]}

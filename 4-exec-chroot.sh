@@ -6,4 +6,3 @@ log "Copying chroot scripts to /mnt"
 cp $(dirname $0)/{chroot,utils}.sh /mnt
 log "Executing chroot"
 arch-chroot /mnt ./chroot.sh
-
