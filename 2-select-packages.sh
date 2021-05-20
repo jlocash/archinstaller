@@ -46,7 +46,6 @@ if [[ ! $gnome_enable =~ ^[Nn]$ ]]; then
     "gnome"
     "alsa-utils"
     "gnome-tweaks"
-    "flatpak"
     "firefox"
   )
 
@@ -62,12 +61,7 @@ if [[ ! $gnome_enable =~ ^[Nn]$ ]]; then
 
   read -p "Add Flatpak? [Y/n]: " flatpak_enable
   if [[ ! $flatpak_enable =~ ^[Nn]$ ]]; then
-    pkglist+=(
-      "pipewire"
-      "pipewire-alsa"
-      "pipewire-jack"
-      "pipewire-pulse"
-    )
+    pkglist+=("flatpak")
   fi
 fi
 
