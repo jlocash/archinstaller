@@ -6,8 +6,11 @@ hwclock --systohc
 
 # locale
 log "Configuring system locale"
-TARGET_LOCALE="en_US.UTF-8"
 read -p "enter desired locale [en_US.UTF-8]: " TARGET_LOCALE
+if [[ -z $TARGET_LOCALE ]]; then
+  TARGET_LOCALE="en_US.UTF-8"
+fi
+
 echo "$TARGET_LOCALE $(echo $TARGET_LOCALE | cut -d '.' -f 2)" >>/etc/locale.gen
 locale-gen
 sed -i "s/__TARGET_LOCALE__/$TARGET_LOCALE/" /etc/locale.conf
