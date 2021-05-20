@@ -53,10 +53,8 @@ done
 # install and configure GRUB
 log "Installing the GRUB bootloader"
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=archlinux
-CRYPT_PATH="$(findmnt -n -o SOURCE --target=/ | cut -d '[' -f 1)"
-CRYPT_NAME="$(echo $CRYPT_PATH | cut -d '/' -f 4)"
-ROOT_PART="$(cryptsetup status $CRYPT_NAME | grep device: | cut -d ':' -f 2 | xargs)"
-GRUB_CRYPT_ENTRY="rd.luks.name=$(blkid -s UUID -o value $ROOT_PART)=$CRYPT_NAME root=/dev/mapper/$CRYPT_NAME"
+CRYPT_NAME="$(basename $(findmnt -nvo SOURCE --target=/))"
+GRUB_CRYPT_ENTRY="rd.luks.uuid=$CRYPT_NAME"
 sed -i "s|__GRUB_CRYPT_ENTRY__|$GRUB_CRYPT_ENTRY|" /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
