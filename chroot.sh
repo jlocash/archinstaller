@@ -1,70 +1,82 @@
 #!/usr/bin/env bash
 set -e
 source utils.sh
-source install.conf
 
-function configure_time_date_locale() {
-  log_info "Configuring timezone, date and locale"
-  timedatectl set-ntp true
-  timedatectl set-timezone "${TARGET_TIMEZONE}"
-  # ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
-  echo "${TARGET_LOCALE} $(echo ${TARGET_LOCALE} | cut -d '.' -f 2)" >>/etc/locale.gen
-  locale-gen
-  echo "LANG=\"${TARGET_LOCALE}\"" >>/etc/locale.conf
-  echo "KEYMAP=\"${TARGET_KEYMAP}\"" >/etc/vconsole.conf
-}
+hwclock --systohc
 
-function configure_hosts() {
-  log_info "Configuring system hostname"
-  echo "${1}" >/etc/hostname
-  sed -i "s/__TARGET_HOSTNAME__/${1}/g" /etc/hosts
-}
+# locale
+log "Configuring system locale"
+read -p "enter desired locale [en_US.UTF-8]: " TARGET_LOCALE
+if [[ -z $TARGET_LOCALE ]]; then
+  TARGET_LOCALE="en_US.UTF-8"
+fi
 
-function enable_services() {
-  systemctl enable \
-    NetworkManager \
-    fstrim.timer \
-    dnsmasq \
-    ebtables \
-    libvirtd \
-    firewalld \
-    tlp \
-    powertop \
-    gdm
-}
+echo "$TARGET_LOCALE $(echo $TARGET_LOCALE | cut -d '.' -f 2)" >>/etc/locale.gen
+locale-gen
+sed -i "s/__TARGET_LOCALE__/$TARGET_LOCALE/" /etc/locale.conf
 
-function configure_bootloader() {
-  local crypt_part="${1}"                       # eg: /dev/sda3
-  local crypt_name="${2}"                       # eg: luks-<uuid>
-  local crypt_path="/dev/mapper/${crypt_name}"  # eg: /dev/mapper/luks-<uuid>
-  local grub_crypt_entry="rd.luks.name=$(blkid -s UUID -o value $crypt_part)=${crypt_name} root=${crypt_path}"
-  sed -i "s|__GRUB_CRYPT_ENTRY__|${grub_crypt_entry}|" /etc/default/grub
+# keymap
+log "Configuring system keymap"
+read -p "enter desired keymap [us]: " TARGET_KEYMAP
+if [[ -z $TARGET_KEYMAP ]]; then
+  TARGET_KEYMAP="us"
+fi
+sed -i "s/__TARGET_KEYMAP__/$TARGET_KEYMAP/" /etc/vconsole.conf
 
-  log_info "Installing the GRUB bootloader"
-  grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=archlinux
-  grub-mkconfig -o /boot/grub/grub.cfg
-}
+# hostname
+log "Configuring system hostname"
+read -p "enter desired hostname [archlinux]: " TARGET_HOSTNAME
+if [[ -z $TARGET_HOSTNAME ]]; then
+  TARGET_HOSTNAME="archlinux"
+fi
+echo "$TARGET_HOSTNAME" >/etc/hostname
+sed -i "s/__TARGET_HOSTNAME__/$TARGET_HOSTNAME/g" /etc/hosts
 
-function add_user() {
-  log_info "Creating local administrator account"
-  read -p "Enter username: " username
+# enable systemd services
+log "Enabling systemd services"
+svc_list=(
+  "NetworkManager"
+  "fstrim.timer"
+  "dnsmasq"
+  "ebtables"
+  "libvirtd"
+  "firewalld"
+  "tlp"
+  "powertop"
+  "gdm"
+)
 
-  while [[ "${username}" == "" ]]; do
-    log_info "Invalid username: \"${username}\""
-    read -p "Enter username: " username
-  done
+for svc in ${svc_list[@]}; do
+  systemctl enable $svc || true
+done
 
-  useradd -m -G wheel "${username}"
-  passwd "${username}"
-}
+# install and configure GRUB
+log "Installing the GRUB bootloader"
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=archlinux
+CRYPT_PATH="$(findmnt -n -o SOURCE --target=/ | cut -d '[' -f 1)"
+CRYPT_NAME="$(echo $CRYPT_PATH | cut -d '/' -f 4)"
+ROOT_PART="$(cryptsetup status $CRYPT_NAME | grep device: | cut -d ':' -f 2 | xargs)"
+GRUB_CRYPT_ENTRY="rd.luks.name=$(blkid -s UUID -o value $ROOT_PART)=$CRYPT_NAME root=/dev/mapper/$CRYPT_NAME"
+sed -i "s|__GRUB_CRYPT_ENTRY__|$GRUB_CRYPT_ENTRY|" /etc/default/grub
+grub-mkconfig -o /boot/grub/grub.cfg
 
-partlist=("$TARGET_DISK"*)
-configure_time_date_locale
-configure_hosts "${TARGET_HOSTNAME}"
-enable_services
-configure_bootloader "${partlist[3]}" "${CRYPT_NAME}"
+# Regenerate initramfs
+log "Regenerating initramfs"
 mkinitcpio -p linux
+
+# create administrator user
+log "Creating local administrator account"
+username=""
+while [[ -z $username ]]; do
+  read -p "Enter username: " username
+done
+
+useradd -m -G wheel "$username"
+passwd "$username"
+
+# tweak /etc/sudoers
 sed -i 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+NOPASSWD:\s\+ALL\)/\1/' /etc/sudoers
-add_user
-log_info "Locking root account"
+
+# Lock root account
+log "Locking root account"
 passwd -l root
